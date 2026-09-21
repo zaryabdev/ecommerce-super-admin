@@ -10,7 +10,7 @@
 
 ## Depends on Admin (coordinate before changing Admin)
 
-- [ ] Admin: privileged `/api/super-admin/...` namespace with Clerk token verification + `SUPER_ADMIN_CLERK_USER_ID` check
+- [x] Admin: privileged `/api/super-admin/...` namespace with Clerk token verification + `SUPER_ADMIN_CLERK_USER_ID` check
 - [ ] Admin: cross-Store read endpoints (Store list/detail, owner, order count, sales totals)
 - [ ] Admin: monthly eligible-sales definition + calculation
 - [ ] Admin: billing-plan model + Store assignment + invoice domain (design not decided)

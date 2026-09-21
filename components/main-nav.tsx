@@ -9,8 +9,9 @@ import { cn } from "@/lib/utils"
 // inert "soon" items so the shell communicates direction without dead links.
 const routes = [
   { href: '/', label: 'Dashboard' },
+  { href: '/stores', label: 'Stores' },
 ]
-const plannedRoutes = ['Stores', 'Billing']
+const plannedRoutes = ['Billing']
 
 export function MainNav({
   className,
@@ -23,18 +24,25 @@ export function MainNav({
       className={cn("flex items-center space-x-4 lg:space-x-6", className)}
       {...props}
     >
-      {routes.map((route) => (
-        <Link
-          key={route.href}
-          href={route.href}
-          className={cn(
-            'text-sm font-medium transition-colors hover:text-primary',
-            pathname === route.href ? 'text-black dark:text-white' : 'text-muted-foreground'
-          )}
-        >
-          {route.label}
-        </Link>
-      ))}
+      {routes.map((route) => {
+        const active =
+          route.href === '/'
+            ? pathname === '/'
+            : pathname === route.href || pathname.startsWith(`${route.href}/`);
+        return (
+          <Link
+            key={route.href}
+            href={route.href}
+            aria-current={active ? 'page' : undefined}
+            className={cn(
+              'text-sm font-medium transition-colors hover:text-primary',
+              active ? 'text-black dark:text-white' : 'text-muted-foreground'
+            )}
+          >
+            {route.label}
+          </Link>
+        );
+      })}
       {plannedRoutes.map((label) => (
         <span
           key={label}
