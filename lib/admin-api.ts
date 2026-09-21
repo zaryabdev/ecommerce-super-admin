@@ -3,6 +3,8 @@ import "server-only";
 import { auth } from "@clerk/nextjs";
 
 import type {
+  SuperAdminStoreDetail,
+  SuperAdminStoreDetailResponse,
   SuperAdminStoresResponse,
   SuperAdminStore,
 } from "@/types/super-admin-api";
@@ -17,6 +19,7 @@ export type AdminApiErrorKind =
   | "config" // Super Admin is misconfigured (e.g. ADMIN_API_URL)
   | "unauthenticated" // Admin did not accept the session token (401)
   | "forbidden" // authenticated but not the designated Super Admin (403)
+  | "not_found" // the requested resource does not exist (404)
   | "upstream"; // unreachable, other non-2xx, or unexpected response
 
 // Messages are safe to render; raw Admin/DB details are logged, never surfaced.
@@ -68,6 +71,9 @@ async function adminApiFetch<T>(path: string): Promise<T> {
       "Admin API denied access: this account is not the designated Super Admin."
     );
   }
+  if (response.status === 404) {
+    throw new AdminApiError("not_found", "Not found.");
+  }
   if (!response.ok) {
     console.error(`[ADMIN_API] GET ${path} -> ${response.status}`);
     throw new AdminApiError("upstream", "The Admin API returned an error.");
@@ -90,4 +96,17 @@ export async function getSuperAdminStores(): Promise<SuperAdminStore[]> {
     throw new AdminApiError("upstream", "The Admin API returned an invalid response.");
   }
   return body.stores;
+}
+
+export async function getSuperAdminStore(
+  storeId: string
+): Promise<SuperAdminStoreDetail> {
+  const body = await adminApiFetch<SuperAdminStoreDetailResponse>(
+    `${PRIVILEGED_PREFIX}stores/${encodeURIComponent(storeId)}`
+  );
+  if (!body || !body.store || typeof body.store.id !== "string") {
+    console.error("[ADMIN_API] store detail response had an unexpected shape");
+    throw new AdminApiError("upstream", "The Admin API returned an invalid response.");
+  }
+  return body.store;
 }

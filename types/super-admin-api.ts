@@ -15,3 +15,20 @@ export interface SuperAdminStore {
 export interface SuperAdminStoresResponse {
   stores: SuperAdminStore[];
 }
+
+export interface SuperAdminStoreOwner {
+  /** Clerk user id. */
+  userId: string;
+  /** Null when the Clerk user has no name or could not be resolved. */
+  firstName: string | null;
+  lastName: string | null;
+  email: string | null;
+}
+
+export interface SuperAdminStoreDetail extends SuperAdminStore {
+  owner: SuperAdminStoreOwner;
+}
+
+export interface SuperAdminStoreDetailResponse {
+  store: SuperAdminStoreDetail;
+}

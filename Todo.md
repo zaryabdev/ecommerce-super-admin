@@ -18,7 +18,7 @@
 ## Release 1 Features
 
 - [ ] Dashboard metrics
-- [ ] Store listing
+- [x] Store listing
 - [ ] Store detail (owner info, creation date, order count, sales totals)
 - [ ] Billing plan assignment/change
 - [ ] Monthly invoice generation (manual)

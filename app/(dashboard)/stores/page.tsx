@@ -1,3 +1,5 @@
+import Link from 'next/link';
+
 import { Heading } from '@/components/ui/heading';
 import { Separator } from '@/components/ui/separator';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -64,7 +66,14 @@ const StoresPage = async () => {
               <TableBody>
                 {stores.map((store) => (
                   <TableRow key={store.id}>
-                    <TableCell className="font-medium">{store.name}</TableCell>
+                    <TableCell className="font-medium">
+                      <Link
+                        href={`/stores/${store.id}`}
+                        className="hover:underline"
+                      >
+                        {store.name}
+                      </Link>
+                    </TableCell>
                     <TableCell className="whitespace-nowrap">
                       {formatDate(store.createdAt)}
                     </TableCell>
