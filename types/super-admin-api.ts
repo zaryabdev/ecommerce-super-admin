@@ -32,3 +32,36 @@ export interface SuperAdminStoreDetail extends SuperAdminStore {
 export interface SuperAdminStoreDetailResponse {
   store: SuperAdminStoreDetail;
 }
+
+export type SuperAdminOrderStatus =
+  | "DRAFT"
+  | "CONFIRMED"
+  | "DELIVERED"
+  | "CANCELED";
+
+export type SuperAdminPaymentMethod = "COD" | "STRIPE";
+
+export interface SuperAdminOrder {
+  id: string;
+  trackingId: string;
+  /** ISO 8601 date string. */
+  createdAt: string;
+  status: SuperAdminOrderStatus;
+  itemCount: number;
+  /** Decimal string. Never convert to a JS number. */
+  total: string;
+  currency: string;
+  paymentMethod: SuperAdminPaymentMethod;
+}
+
+export interface SuperAdminPagination {
+  page: number;
+  pageSize: number;
+  totalCount: number;
+  totalPages: number;
+}
+
+export interface SuperAdminStoreOrdersResponse {
+  orders: SuperAdminOrder[];
+  pagination: SuperAdminPagination;
+}

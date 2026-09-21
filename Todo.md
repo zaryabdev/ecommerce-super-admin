@@ -19,7 +19,7 @@
 
 - [ ] Dashboard metrics
 - [x] Store listing
-- [ ] Store detail (owner info, creation date, order count, sales totals)
+- [x] Store detail (owner info, creation date, order count, sales totals)
 - [ ] Billing plan assignment/change
 - [ ] Monthly invoice generation (manual)
 - [ ] Send / mark invoice

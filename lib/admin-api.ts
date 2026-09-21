@@ -5,6 +5,7 @@ import { auth } from "@clerk/nextjs";
 import type {
   SuperAdminStoreDetail,
   SuperAdminStoreDetailResponse,
+  SuperAdminStoreOrdersResponse,
   SuperAdminStoresResponse,
   SuperAdminStore,
 } from "@/types/super-admin-api";
@@ -109,4 +110,23 @@ export async function getSuperAdminStore(
     throw new AdminApiError("upstream", "The Admin API returned an invalid response.");
   }
   return body.store;
+}
+
+export async function getSuperAdminStoreOrders(
+  storeId: string,
+  page: number,
+  pageSize: number
+): Promise<SuperAdminStoreOrdersResponse> {
+  const query = new URLSearchParams({
+    page: String(page),
+    pageSize: String(pageSize),
+  });
+  const body = await adminApiFetch<SuperAdminStoreOrdersResponse>(
+    `${PRIVILEGED_PREFIX}stores/${encodeURIComponent(storeId)}/orders?${query}`
+  );
+  if (!body || !Array.isArray(body.orders) || !body.pagination) {
+    console.error("[ADMIN_API] store orders response had an unexpected shape");
+    throw new AdminApiError("upstream", "The Admin API returned an invalid response.");
+  }
+  return body;
 }

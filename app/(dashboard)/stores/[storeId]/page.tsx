@@ -3,13 +3,50 @@ import Link from 'next/link';
 import { Heading } from '@/components/ui/heading';
 import { Separator } from '@/components/ui/separator';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { AdminApiError, getSuperAdminStore } from '@/lib/admin-api';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import {
+  AdminApiError,
+  getSuperAdminStore,
+  getSuperAdminStoreOrders,
+} from '@/lib/admin-api';
 import { formatDate, formatMoney } from '@/lib/utils';
-import type { SuperAdminStoreDetail } from '@/types/super-admin-api';
+import type {
+  SuperAdminOrderStatus,
+  SuperAdminStoreDetail,
+  SuperAdminStoreOrdersResponse,
+} from '@/types/super-admin-api';
 
 // Per-request platform data behind auth; never statically rendered.
 export const dynamic = 'force-dynamic';
+
+const ORDERS_PAGE_SIZE = 20;
+
+const statusVariant: Record<
+  SuperAdminOrderStatus,
+  'default' | 'secondary' | 'destructive' | 'outline'
+> = {
+  DRAFT: 'secondary',
+  CONFIRMED: 'outline',
+  DELIVERED: 'default',
+  CANCELED: 'destructive',
+};
+
+const parsePage = (value: string | string[] | undefined) => {
+  const raw = Array.isArray(value) ? value[0] : value;
+  if (!raw || !/^\d+$/.test(raw)) return 1;
+  const page = Number(raw);
+  return Number.isSafeInteger(page) && page >= 1 ? page : 1;
+};
 
 const BackLink = () => (
   <Link
@@ -20,10 +57,38 @@ const BackLink = () => (
   </Link>
 );
 
-const StoreDetailPage = async ({ params }: { params: { storeId: string } }) => {
+const StoreDetailPage = async ({
+  params,
+  searchParams,
+}: {
+  params: { storeId: string };
+  searchParams: { page?: string | string[] };
+}) => {
+  const requestedPage = parsePage(searchParams.page);
   let store: SuperAdminStoreDetail | null = null;
   let notFound = false;
   let errorMessage = '';
+
+  // Orders fail independently so the rest of the detail stays usable.
+  const ordersPromise = getSuperAdminStoreOrders(
+    params.storeId,
+    requestedPage,
+    ORDERS_PAGE_SIZE
+  ).then(
+    (data) => ({ data, error: '' }),
+    (error: unknown) => {
+      if (!(error instanceof AdminApiError)) {
+        console.error('[STORE_DETAIL_ORDERS]', error);
+      }
+      return {
+        data: null as SuperAdminStoreOrdersResponse | null,
+        error:
+          error instanceof AdminApiError
+            ? error.message
+            : 'Unexpected error while loading orders.',
+      };
+    }
+  );
 
   try {
     store = await getSuperAdminStore(params.storeId);
@@ -65,6 +130,7 @@ const StoreDetailPage = async ({ params }: { params: { storeId: string } }) => {
     );
   }
 
+  const { data: ordersData, error: ordersError } = await ordersPromise;
   const { owner } = store;
   const ownerName =
     [owner.firstName, owner.lastName].filter(Boolean).join(' ') || '—';
@@ -145,6 +211,105 @@ const StoreDetailPage = async ({ params }: { params: { storeId: string } }) => {
               </dl>
             </CardContent>
           </Card>
+        </div>
+        <div className="space-y-4 pt-4">
+          <h3 className="text-xl font-semibold tracking-tight">Orders</h3>
+          {!ordersData ? (
+            <Alert variant="destructive">
+              <AlertTitle>Could not load orders</AlertTitle>
+              <AlertDescription>{ordersError}</AlertDescription>
+            </Alert>
+          ) : ordersData.pagination.totalCount === 0 ? (
+            <div className="rounded-lg border border-dashed p-8 text-center text-sm text-muted-foreground">
+              This store has no orders yet.
+            </div>
+          ) : ordersData.orders.length === 0 ? (
+            <div className="rounded-lg border border-dashed p-8 text-center text-sm text-muted-foreground">
+              No orders on this page.{' '}
+              <Link
+                href={`/stores/${store.id}?page=${ordersData.pagination.totalPages}`}
+                className="underline"
+              >
+                Go to the last page
+              </Link>
+            </div>
+          ) : (
+            <>
+              <div className="rounded-lg border">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Tracking</TableHead>
+                      <TableHead>Created</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead className="text-right">Items</TableHead>
+                      <TableHead className="text-right">Total</TableHead>
+                      <TableHead>Payment</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {ordersData.orders.map((order) => (
+                      <TableRow key={order.id}>
+                        <TableCell className="whitespace-nowrap font-mono">
+                          {order.trackingId}
+                        </TableCell>
+                        <TableCell className="whitespace-nowrap">
+                          {formatDate(order.createdAt)}
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant={statusVariant[order.status]}>
+                            {order.status}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-right tabular-nums">
+                          {order.itemCount}
+                        </TableCell>
+                        <TableCell className="whitespace-nowrap text-right tabular-nums">
+                          {formatMoney(order.total, order.currency)}
+                        </TableCell>
+                        <TableCell>{order.paymentMethod}</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-muted-foreground">
+                  Page {ordersData.pagination.page} of{' '}
+                  {ordersData.pagination.totalPages}
+                </span>
+                <div className="flex gap-2">
+                  {ordersData.pagination.page <= 1 ? (
+                    <Button variant="outline" size="sm" disabled>
+                      Previous
+                    </Button>
+                  ) : (
+                    <Button variant="outline" size="sm" asChild>
+                      <Link
+                        href={`/stores/${store.id}?page=${ordersData.pagination.page - 1}`}
+                      >
+                        Previous
+                      </Link>
+                    </Button>
+                  )}
+                  {ordersData.pagination.page >=
+                  ordersData.pagination.totalPages ? (
+                    <Button variant="outline" size="sm" disabled>
+                      Next
+                    </Button>
+                  ) : (
+                    <Button variant="outline" size="sm" asChild>
+                      <Link
+                        href={`/stores/${store.id}?page=${ordersData.pagination.page + 1}`}
+                      >
+                        Next
+                      </Link>
+                    </Button>
+                  )}
+                </div>
+              </div>
+            </>
+          )}
         </div>
       </div>
     </div>
