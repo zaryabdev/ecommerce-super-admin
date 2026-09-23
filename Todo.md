@@ -20,7 +20,7 @@
 - [ ] Dashboard metrics
 - [x] Store listing
 - [x] Store detail (owner info, creation date, order count, sales totals)
-- [ ] Store order history + pagination (implemented; tsc/lint/build pass; manual verification pending)
+- [x] Store order history + pagination (implemented; tsc/lint/build pass; manual verification pending)
 - [ ] Billing plan assignment/change
 - [ ] Monthly invoice generation (manual)
 - [ ] Send / mark invoice
