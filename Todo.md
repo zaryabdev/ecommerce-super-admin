@@ -13,7 +13,8 @@
 - [x] Admin: privileged `/api/super-admin/...` namespace with Clerk token verification + `SUPER_ADMIN_CLERK_USER_ID` check
 - [x] Admin: cross-Store read endpoints (Store list/detail, owner, order count, sales totals)
 - [ ] Admin: monthly eligible-sales definition + calculation
-- [ ] Admin: billing-plan model + Store assignment + invoice domain (design not decided)
+- [x] Admin: billing-plan model + Store assignment API (`/api/super-admin/billing-plans`, `/stores/:id/billing-plan`)
+- [ ] Admin: invoice domain (design not decided)
 
 ## Release 1 Features
 
@@ -21,7 +22,7 @@
 - [x] Store listing
 - [x] Store detail (owner info, creation date, order count, sales totals)
 - [x] Store order history + pagination (implemented; tsc/lint/build pass; manual verification pending)
-- [ ] Billing plan assignment/change
+- [x] Billing Plans — Super Admin UI: plan management (create/edit/archive/restore) + Store billing-plan assignment (tsc/lint/build pass; manual verification pending)
 - [ ] Monthly invoice generation (manual)
 - [ ] Send / mark invoice
 - [ ] Invoice history

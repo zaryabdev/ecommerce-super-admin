@@ -65,3 +65,57 @@ export interface SuperAdminStoreOrdersResponse {
   orders: SuperAdminOrder[];
   pagination: SuperAdminPagination;
 }
+
+export type SuperAdminBillingPlanType = "FIXED" | "PERCENTAGE";
+
+export type SuperAdminBillingPlanStatus = "all" | "active" | "archived";
+
+export interface SuperAdminBillingPlan {
+  id: string;
+  name: string;
+  type: SuperAdminBillingPlanType;
+  /** Decimal string; null unless type is FIXED. Never convert to a JS number. */
+  fixedAmount: string | null;
+  /** Decimal string; null unless type is PERCENTAGE. Unit is not yet decided. */
+  percentageRate: string | null;
+  isArchived: boolean;
+  /** ISO 8601 date string. */
+  createdAt: string;
+  /** ISO 8601 date string. */
+  updatedAt: string;
+}
+
+export interface SuperAdminBillingPlansResponse {
+  plans: SuperAdminBillingPlan[];
+}
+
+export interface SuperAdminBillingPlanResponse {
+  plan: SuperAdminBillingPlan;
+}
+
+export interface SuperAdminCreateBillingPlanInput {
+  name: string;
+  type: SuperAdminBillingPlanType;
+  fixedAmount: string | null;
+  percentageRate: string | null;
+}
+
+export interface SuperAdminUpdateBillingPlanInput {
+  name?: string;
+  type?: SuperAdminBillingPlanType;
+  fixedAmount?: string | null;
+  percentageRate?: string | null;
+  isArchived?: boolean;
+}
+
+export interface SuperAdminStoreBillingPlan {
+  id: string;
+  name: string;
+  billingPlanId: string | null;
+  /** May be archived: archiving a plan never rewrites Stores that use it. */
+  billingPlan: SuperAdminBillingPlan | null;
+}
+
+export interface SuperAdminStoreBillingPlanResponse {
+  store: SuperAdminStoreBillingPlan;
+}

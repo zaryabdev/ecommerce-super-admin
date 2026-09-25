@@ -10,8 +10,9 @@ import { cn } from "@/lib/utils"
 const routes = [
   { href: '/', label: 'Dashboard' },
   { href: '/stores', label: 'Stores' },
+  { href: '/billing-plans', label: 'Billing Plans' },
 ]
-const plannedRoutes = ['Billing']
+const plannedRoutes = ['Invoices']
 
 export function MainNav({
   className,

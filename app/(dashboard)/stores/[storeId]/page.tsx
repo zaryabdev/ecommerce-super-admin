@@ -1,5 +1,6 @@
 import Link from 'next/link';
 
+import { StoreBillingPlanCard } from '@/components/billing/store-billing-plan-card';
 import { Heading } from '@/components/ui/heading';
 import { Separator } from '@/components/ui/separator';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -16,12 +17,16 @@ import {
 } from '@/components/ui/table';
 import {
   AdminApiError,
+  getBillingPlans,
+  getStoreBillingPlan,
   getSuperAdminStore,
   getSuperAdminStoreOrders,
 } from '@/lib/admin-api';
 import { formatDate, formatMoney } from '@/lib/utils';
 import type {
+  SuperAdminBillingPlan,
   SuperAdminOrderStatus,
+  SuperAdminStoreBillingPlan,
   SuperAdminStoreDetail,
   SuperAdminStoreOrdersResponse,
 } from '@/types/super-admin-api';
@@ -47,6 +52,19 @@ const parsePage = (value: string | string[] | undefined) => {
   const page = Number(raw);
   return Number.isSafeInteger(page) && page >= 1 ? page : 1;
 };
+
+// Runs an independent Admin call so a failure only degrades its own section.
+const settle = <T,>(tag: string, promise: Promise<T>, fallback: string) =>
+  promise.then(
+    (data) => ({ data, error: '' }),
+    (error: unknown) => {
+      if (!(error instanceof AdminApiError)) console.error(tag, error);
+      return {
+        data: null as T | null,
+        error: error instanceof AdminApiError ? error.message : fallback,
+      };
+    }
+  );
 
 const BackLink = () => (
   <Link
@@ -90,6 +108,18 @@ const StoreDetailPage = async ({
     }
   );
 
+  const assignmentPromise = settle<SuperAdminStoreBillingPlan>(
+    '[STORE_DETAIL_BILLING_PLAN]',
+    getStoreBillingPlan(params.storeId),
+    'Unexpected error while loading the billing plan.'
+  );
+  // Only active plans are offered for a new assignment.
+  const activePlansPromise = settle<SuperAdminBillingPlan[]>(
+    '[STORE_DETAIL_ACTIVE_PLANS]',
+    getBillingPlans('active'),
+    'Unexpected error while loading billing plans.'
+  );
+
   try {
     store = await getSuperAdminStore(params.storeId);
   } catch (error) {
@@ -131,6 +161,8 @@ const StoreDetailPage = async ({
   }
 
   const { data: ordersData, error: ordersError } = await ordersPromise;
+  const { data: assignment, error: assignmentError } = await assignmentPromise;
+  const { data: activePlans, error: plansError } = await activePlansPromise;
   const { owner } = store;
   const ownerName =
     [owner.firstName, owner.lastName].filter(Boolean).join(' ') || '—';
@@ -212,6 +244,13 @@ const StoreDetailPage = async ({
             </CardContent>
           </Card>
         </div>
+        <StoreBillingPlanCard
+          storeId={store.id}
+          assignment={assignment}
+          assignmentError={assignmentError}
+          activePlans={activePlans}
+          plansError={plansError}
+        />
         <div className="space-y-4 pt-4">
           <h3 className="text-xl font-semibold tracking-tight">Orders</h3>
           {!ordersData ? (
