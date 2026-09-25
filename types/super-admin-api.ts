@@ -119,3 +119,116 @@ export interface SuperAdminStoreBillingPlan {
 export interface SuperAdminStoreBillingPlanResponse {
   store: SuperAdminStoreBillingPlan;
 }
+
+// ---------- Invoices ----------
+
+export type SuperAdminInvoicePaymentStatus = "PENDING" | "PAID";
+export type SuperAdminInvoiceEmailStatus = "NOT_SENT" | "SENT" | "FAILED";
+
+export interface SuperAdminInvoiceListItem {
+  id: string;
+  invoiceNumber: string;
+  storeId: string;
+  storeName: string;
+  billingMonthYear: number;
+  billingMonthMonth: number;
+  /** ISO 8601 date strings. */
+  invoiceDate: string;
+  dueDate: string;
+  /** Decimal string. */
+  total: string;
+  currency: string;
+  paymentStatus: SuperAdminInvoicePaymentStatus;
+  emailStatus: SuperAdminInvoiceEmailStatus;
+  emailSentAt: string | null;
+  emailAttemptCount: number;
+}
+
+export interface SuperAdminInvoiceListResponse {
+  invoices: SuperAdminInvoiceListItem[];
+  pagination: SuperAdminPagination;
+}
+
+/** The permanent stored Invoice snapshot. All amounts are decimal strings. */
+export interface SuperAdminInvoice {
+  id: string;
+  invoiceNumber: string;
+  storeId: string;
+  billingMonthYear: number;
+  billingMonthMonth: number;
+  invoiceDate: string;
+  dueDate: string;
+  billingPlanId: string;
+  billingPlanName: string;
+  billingPlanType: SuperAdminBillingPlanType;
+  fixedAmount: string | null;
+  /** Percentage points: "2.5" means 2.5%. */
+  percentageRate: string | null;
+  eligibleSales: string;
+  basePlatformFee: string;
+  additionalCharge: string;
+  discount: string;
+  total: string;
+  currency: string;
+  notes: string | null;
+  paymentStatus: SuperAdminInvoicePaymentStatus;
+  emailStatus: SuperAdminInvoiceEmailStatus;
+  emailSentAt: string | null;
+  lastEmailAttemptAt: string | null;
+  emailError: string | null;
+  emailAttemptCount: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface SuperAdminInvoiceDetail extends SuperAdminInvoice {
+  store: { id: string; name: string };
+}
+
+export interface SuperAdminInvoiceDetailResponse {
+  invoice: SuperAdminInvoiceDetail;
+}
+
+/** The only values a client may submit for preview/generation. */
+export interface SuperAdminInvoiceInput {
+  billingMonthYear: number;
+  billingMonthMonth: number;
+  additionalCharge: string;
+  discount: string;
+  notes: string | null;
+}
+
+export interface SuperAdminInvoicePreview {
+  store: { id: string; name: string };
+  billingMonthYear: number;
+  billingMonthMonth: number;
+  periodStart: string;
+  periodEnd: string;
+  billingPlan: {
+    id: string;
+    name: string;
+    type: SuperAdminBillingPlanType;
+    fixedAmount: string | null;
+    percentageRate: string | null;
+    isArchived: boolean;
+  };
+  eligibleSales: string;
+  eligibleOrderCount: number;
+  basePlatformFee: string;
+  additionalCharge: string;
+  discount: string;
+  total: string;
+  currency: string;
+  notes: string | null;
+  paymentStatus: SuperAdminInvoicePaymentStatus;
+}
+
+export interface SuperAdminInvoicePreviewResponse {
+  preview: SuperAdminInvoicePreview;
+}
+
+/** Result of Generate & Send, and of Resend Email. The Invoice exists either way. */
+export interface SuperAdminInvoiceGenerationResult {
+  invoice: SuperAdminInvoice;
+  delivery: { status: "SENT" | "FAILED"; error: string | null };
+}

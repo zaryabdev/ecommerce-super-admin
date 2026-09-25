@@ -1,6 +1,7 @@
 import Link from 'next/link';
 
 import { StoreBillingPlanCard } from '@/components/billing/store-billing-plan-card';
+import { StoreInvoicesCard } from '@/components/invoices/store-invoices-card';
 import { Heading } from '@/components/ui/heading';
 import { Separator } from '@/components/ui/separator';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -18,6 +19,7 @@ import {
 import {
   AdminApiError,
   getBillingPlans,
+  getInvoices,
   getStoreBillingPlan,
   getSuperAdminStore,
   getSuperAdminStoreOrders,
@@ -25,6 +27,7 @@ import {
 import { formatDate, formatMoney } from '@/lib/utils';
 import type {
   SuperAdminBillingPlan,
+  SuperAdminInvoiceListResponse,
   SuperAdminOrderStatus,
   SuperAdminStoreBillingPlan,
   SuperAdminStoreDetail,
@@ -120,6 +123,12 @@ const StoreDetailPage = async ({
     'Unexpected error while loading billing plans.'
   );
 
+  const invoicesPromise = settle<SuperAdminInvoiceListResponse>(
+    '[STORE_DETAIL_INVOICES]',
+    getInvoices({ storeId: params.storeId, page: 1, pageSize: 10 }),
+    'Unexpected error while loading invoices.'
+  );
+
   try {
     store = await getSuperAdminStore(params.storeId);
   } catch (error) {
@@ -163,6 +172,7 @@ const StoreDetailPage = async ({
   const { data: ordersData, error: ordersError } = await ordersPromise;
   const { data: assignment, error: assignmentError } = await assignmentPromise;
   const { data: activePlans, error: plansError } = await activePlansPromise;
+  const { data: invoicesData, error: invoicesError } = await invoicesPromise;
   const { owner } = store;
   const ownerName =
     [owner.firstName, owner.lastName].filter(Boolean).join(' ') || '—';
@@ -250,6 +260,11 @@ const StoreDetailPage = async ({
           assignmentError={assignmentError}
           activePlans={activePlans}
           plansError={plansError}
+        />
+        <StoreInvoicesCard
+          store={{ id: store.id, name: store.name }}
+          invoices={invoicesData}
+          error={invoicesError}
         />
         <div className="space-y-4 pt-4">
           <h3 className="text-xl font-semibold tracking-tight">Orders</h3>

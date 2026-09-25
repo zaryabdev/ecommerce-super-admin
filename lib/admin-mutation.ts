@@ -28,34 +28,42 @@ export async function readJsonObject(
   return null;
 }
 
+// Maps any error from lib/admin-api.ts to a safe JSON response.
+export function adminErrorResponse(error: unknown): NextResponse {
+  if (!(error instanceof AdminApiError)) {
+    console.error("[ADMIN_MUTATION]", error);
+    return errorResponse(500, "INTERNAL", "Unexpected error.");
+  }
+  switch (error.kind) {
+    case "unauthenticated":
+      return errorResponse(401, "UNAUTHENTICATED", error.message);
+    case "forbidden":
+      return errorResponse(403, "FORBIDDEN", error.message);
+    case "not_found":
+      return errorResponse(404, error.code ?? "NOT_FOUND", error.message);
+    case "rejected":
+      return errorResponse(error.status ?? 400, error.code ?? "REJECTED", error.message);
+    default:
+      return errorResponse(502, "UPSTREAM", error.message);
+  }
+}
+
+// UI-level gate only; Admin re-checks the Super Admin on every call.
+export const isGatedOut = () => !isSuperAdmin(auth().userId);
+
+export const forbiddenResponse = () =>
+  errorResponse(403, "FORBIDDEN", "This account is not the designated Super Admin.");
+
 export async function handleAdminMutation(
   run: () => Promise<unknown>,
   successStatus = 200
 ): Promise<NextResponse> {
-  // UI-level gate only; Admin re-checks the Super Admin on every call.
-  if (!isSuperAdmin(auth().userId)) {
-    return errorResponse(403, "FORBIDDEN", "This account is not the designated Super Admin.");
-  }
+  if (isGatedOut()) return forbiddenResponse();
 
   try {
     return NextResponse.json(await run(), { status: successStatus });
   } catch (error) {
-    if (!(error instanceof AdminApiError)) {
-      console.error("[ADMIN_MUTATION]", error);
-      return errorResponse(500, "INTERNAL", "Unexpected error.");
-    }
-    switch (error.kind) {
-      case "unauthenticated":
-        return errorResponse(401, "UNAUTHENTICATED", error.message);
-      case "forbidden":
-        return errorResponse(403, "FORBIDDEN", error.message);
-      case "not_found":
-        return errorResponse(404, error.code ?? "NOT_FOUND", error.message);
-      case "rejected":
-        return errorResponse(error.status ?? 400, error.code ?? "REJECTED", error.message);
-      default:
-        return errorResponse(502, "UPSTREAM", error.message);
-    }
+    return adminErrorResponse(error);
   }
 }
 

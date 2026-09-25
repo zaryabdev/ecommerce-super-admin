@@ -12,9 +12,10 @@
 
 - [x] Admin: privileged `/api/super-admin/...` namespace with Clerk token verification + `SUPER_ADMIN_CLERK_USER_ID` check
 - [x] Admin: cross-Store read endpoints (Store list/detail, owner, order count, sales totals)
-- [ ] Admin: monthly eligible-sales definition + calculation
+- [x] Admin: monthly eligible-sales definition + calculation (`calculateEligibleSales`, UTC months)
 - [x] Admin: billing-plan model + Store assignment API (`/api/super-admin/billing-plans`, `/stores/:id/billing-plan`)
-- [ ] Admin: invoice domain (design not decided)
+- [x] Admin: invoice preview / generation / PDF / email / resend / read APIs (`/api/super-admin/invoices...`, `/stores/:id/invoices[/preview]`)
+- [ ] Admin: manual payment recording, payment evidence, derived ledger
 
 ## Release 1 Features
 
@@ -23,6 +24,5 @@
 - [x] Store detail (owner info, creation date, order count, sales totals)
 - [x] Store order history + pagination (implemented; tsc/lint/build pass; manual verification pending)
 - [x] Billing Plans — Super Admin UI: plan management (create/edit/archive/restore) + Store billing-plan assignment (tsc/lint/build pass; manual verification pending)
-- [ ] Monthly invoice generation (manual)
-- [ ] Send / mark invoice
-- [ ] Invoice history
+- [x] Super Admin Invoice UI / Invoice History: `/invoices` list + pagination, `/invoices/[invoiceId]` detail, Store-detail Invoices card, Generate Invoice (preview → Generate & Send), PDF download/open, email status, Resend Email (tsc/lint/build pass; manual verification pending)
+- [ ] Mark invoice paid (manual payment recording), payment evidence, financial ledger

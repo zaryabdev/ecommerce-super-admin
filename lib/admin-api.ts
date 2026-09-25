@@ -4,6 +4,13 @@ import { auth } from "@clerk/nextjs";
 
 import type {
   SuperAdminBillingPlan,
+  SuperAdminInvoiceDetail,
+  SuperAdminInvoiceDetailResponse,
+  SuperAdminInvoiceGenerationResult,
+  SuperAdminInvoiceInput,
+  SuperAdminInvoiceListResponse,
+  SuperAdminInvoicePreview,
+  SuperAdminInvoicePreviewResponse,
   SuperAdminBillingPlanResponse,
   SuperAdminBillingPlansResponse,
   SuperAdminBillingPlanStatus,
@@ -50,6 +57,8 @@ export class AdminApiError extends Error {
 interface AdminRequestInit {
   method?: "GET" | "POST" | "PATCH" | "PUT";
   body?: unknown;
+  /** Statuses handed back to the caller (body unread) instead of thrown. */
+  passThroughStatus?: number[];
 }
 
 // Admin's validation/conflict responses are { error: string, message: string }.
@@ -68,10 +77,13 @@ async function readAdminErrorBody(
   return null;
 }
 
-async function adminApiFetch<T>(
+// Authenticated request to Admin with the shared error mapping. Returns the raw
+// Response for success (and any passThroughStatus); JSON callers use
+// adminApiFetch, binary callers (PDF) read the body themselves.
+async function adminApiRequest(
   path: string,
-  { method = "GET", body }: AdminRequestInit = {}
-): Promise<T> {
+  { method = "GET", body, passThroughStatus = [] }: AdminRequestInit = {}
+): Promise<Response> {
   const baseUrl = process.env.ADMIN_API_URL?.trim();
   if (!baseUrl) {
     console.error("[ADMIN_API] ADMIN_API_URL is not configured");
@@ -102,6 +114,8 @@ async function adminApiFetch<T>(
     console.error(`[ADMIN_API] ${method} ${path} unreachable:`, error);
     throw new AdminApiError("upstream", "Could not reach the Admin API.");
   }
+
+  if (passThroughStatus.includes(response.status)) return response;
 
   if (response.status === 401) {
     console.error(`[ADMIN_API] ${method} ${path} -> 401 (session token not accepted)`);
@@ -142,10 +156,18 @@ async function adminApiFetch<T>(
     throw new AdminApiError("upstream", "The Admin API returned an error.");
   }
 
+  return response;
+}
+
+async function adminApiFetch<T>(
+  path: string,
+  init: AdminRequestInit = {}
+): Promise<T> {
+  const response = await adminApiRequest(path, init);
   try {
     return (await response.json()) as T;
   } catch {
-    console.error(`[ADMIN_API] ${method} ${path} -> invalid JSON body`);
+    console.error(`[ADMIN_API] ${init.method ?? "GET"} ${path} -> invalid JSON body`);
     throw new AdminApiError("upstream", "The Admin API returned an invalid response.");
   }
 }
@@ -271,4 +293,89 @@ export async function updateStoreBillingPlan(
     throw invalidResponse("update store billing plan");
   }
   return body.store;
+}
+
+// ---------- Invoices (Admin owns every calculation; Super Admin only relays) ----------
+
+export async function getInvoices(params: {
+  storeId?: string;
+  page: number;
+  pageSize: number;
+}): Promise<SuperAdminInvoiceListResponse> {
+  const query = new URLSearchParams({
+    page: String(params.page),
+    pageSize: String(params.pageSize),
+  });
+  if (params.storeId) query.set("storeId", params.storeId);
+  const body = await adminApiFetch<SuperAdminInvoiceListResponse>(
+    `${PRIVILEGED_PREFIX}invoices?${query}`
+  );
+  if (!body || !Array.isArray(body.invoices) || !body.pagination) {
+    throw invalidResponse("invoices");
+  }
+  return body;
+}
+
+export async function getInvoice(
+  invoiceId: string
+): Promise<SuperAdminInvoiceDetail> {
+  const body = await adminApiFetch<SuperAdminInvoiceDetailResponse>(
+    `${PRIVILEGED_PREFIX}invoices/${encodeURIComponent(invoiceId)}`
+  );
+  if (!body || !body.invoice || typeof body.invoice.id !== "string") {
+    throw invalidResponse("invoice");
+  }
+  return body.invoice;
+}
+
+export async function previewInvoice(
+  storeId: string,
+  input: SuperAdminInvoiceInput
+): Promise<SuperAdminInvoicePreview> {
+  const body = await adminApiFetch<SuperAdminInvoicePreviewResponse>(
+    `${PRIVILEGED_PREFIX}stores/${encodeURIComponent(storeId)}/invoices/preview`,
+    { method: "POST", body: input }
+  );
+  if (!body || !body.preview) throw invalidResponse("invoice preview");
+  return body.preview;
+}
+
+/** Only the generation inputs are sent; Admin derives every other value. */
+export async function generateInvoice(
+  storeId: string,
+  input: SuperAdminInvoiceInput
+): Promise<SuperAdminInvoiceGenerationResult> {
+  const body = await adminApiFetch<SuperAdminInvoiceGenerationResult>(
+    `${PRIVILEGED_PREFIX}stores/${encodeURIComponent(storeId)}/invoices`,
+    { method: "POST", body: input }
+  );
+  if (!body || !body.invoice || !body.delivery) throw invalidResponse("generate invoice");
+  return body;
+}
+
+// Admin answers a FAILED delivery with 502 EMAIL_DELIVERY_FAILED but still
+// includes the updated invoice + delivery result. That is a normal outcome for
+// the UI (the invoice exists), so both cases come back as one result.
+export async function resendInvoiceEmail(
+  invoiceId: string
+): Promise<SuperAdminInvoiceGenerationResult> {
+  const body = await adminApiFetch<SuperAdminInvoiceGenerationResult>(
+    `${PRIVILEGED_PREFIX}invoices/${encodeURIComponent(invoiceId)}/send-email`,
+    { method: "POST", passThroughStatus: [502] }
+  );
+  if (!body || !body.invoice || !body.delivery) throw invalidResponse("resend invoice email");
+  return body;
+}
+
+export async function getInvoicePdf(invoiceId: string) {
+  const response = await adminApiRequest(
+    `${PRIVILEGED_PREFIX}invoices/${encodeURIComponent(invoiceId)}/pdf`
+  );
+  if (!(response.headers.get("content-type") ?? "").startsWith("application/pdf")) {
+    throw invalidResponse("invoice pdf");
+  }
+  const filename =
+    /filename="([^"]+)"/.exec(response.headers.get("content-disposition") ?? "")?.[1] ??
+    "invoice.pdf";
+  return { bytes: await response.arrayBuffer(), filename };
 }

@@ -9,11 +9,16 @@ import type {
 // (app/api/...), which forward to Admin server-side. No token lives here.
 // Errors carry Admin's safe message; anything unexpected gets a fallback.
 
-export class BillingRequestError extends Error {}
+// `code` is Admin's stable error code (e.g. INVOICE_ALREADY_EXISTS) when known.
+export class BillingRequestError extends Error {
+  constructor(message: string, public readonly code?: string) {
+    super(message);
+  }
+}
 
 const FALLBACK = "Something went wrong. Please try again.";
 
-async function request<T>(
+export async function request<T>(
   url: string,
   method: "POST" | "PATCH" | "PUT",
   body: unknown
@@ -37,9 +42,10 @@ async function request<T>(
   }
 
   if (!response.ok) {
-    const message = (data as { message?: unknown } | null)?.message;
+    const { message, error } = (data ?? {}) as { message?: unknown; error?: unknown };
     throw new BillingRequestError(
-      typeof message === "string" && message ? message : FALLBACK
+      typeof message === "string" && message ? message : FALLBACK,
+      typeof error === "string" ? error : undefined
     );
   }
   if (!data) throw new BillingRequestError(FALLBACK);

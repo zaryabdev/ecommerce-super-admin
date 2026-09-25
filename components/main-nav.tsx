@@ -11,8 +11,9 @@ const routes = [
   { href: '/', label: 'Dashboard' },
   { href: '/stores', label: 'Stores' },
   { href: '/billing-plans', label: 'Billing Plans' },
+  { href: '/invoices', label: 'Invoices' },
 ]
-const plannedRoutes = ['Invoices']
+const plannedRoutes: string[] = []
 
 export function MainNav({
   className,
