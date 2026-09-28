@@ -11,6 +11,8 @@ import type {
   SuperAdminInvoiceListResponse,
   SuperAdminInvoicePreview,
   SuperAdminInvoicePreviewResponse,
+  SuperAdminMarkPaidInput,
+  SuperAdminMarkPaidResult,
   SuperAdminBillingPlanResponse,
   SuperAdminBillingPlansResponse,
   SuperAdminBillingPlanStatus,
@@ -364,6 +366,19 @@ export async function resendInvoiceEmail(
     { method: "POST", passThroughStatus: [502] }
   );
   if (!body || !body.invoice || !body.delivery) throw invalidResponse("resend invoice email");
+  return body;
+}
+
+/** Full payment only: Admin derives the amount from the stored Invoice total. */
+export async function markInvoicePaid(
+  invoiceId: string,
+  input: SuperAdminMarkPaidInput
+): Promise<SuperAdminMarkPaidResult> {
+  const body = await adminApiFetch<SuperAdminMarkPaidResult>(
+    `${PRIVILEGED_PREFIX}invoices/${encodeURIComponent(invoiceId)}/mark-paid`,
+    { method: "POST", body: input }
+  );
+  if (!body || !body.invoice || !body.payment) throw invalidResponse("mark invoice paid");
   return body;
 }
 

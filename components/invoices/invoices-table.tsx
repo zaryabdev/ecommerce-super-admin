@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { EmailStatusBadge, PaymentStatusBadge } from "@/components/invoices/invoice-badges";
+import { MarkPaidDialog } from "@/components/invoices/mark-paid-dialog";
 import { ResendEmailButton } from "@/components/invoices/resend-email-button";
 import { Button } from "@/components/ui/button";
 import {
@@ -79,6 +80,17 @@ export const InvoicesTable = ({
                   <a href={invoicePdfUrl(invoice.id)}>Download PDF</a>
                 </Button>
                 <ResendEmailButton invoiceId={invoice.id} />
+                {invoice.paymentStatus === "PENDING" && (
+                  <MarkPaidDialog
+                    invoiceId={invoice.id}
+                    invoiceNumber={invoice.invoiceNumber}
+                    storeName={invoice.storeName}
+                    total={invoice.total}
+                    currency={invoice.currency}
+                    billingMonthYear={invoice.billingMonthYear}
+                    billingMonthMonth={invoice.billingMonthMonth}
+                  />
+                )}
               </div>
             </TableCell>
           </TableRow>

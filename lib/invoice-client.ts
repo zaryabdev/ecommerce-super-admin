@@ -3,6 +3,8 @@ import type {
   SuperAdminInvoiceGenerationResult,
   SuperAdminInvoiceInput,
   SuperAdminInvoicePreview,
+  SuperAdminMarkPaidInput,
+  SuperAdminMarkPaidResult,
 } from "@/types/super-admin-api";
 
 // Browser-side calls to Super Admin's same-origin invoice routes, which relay to
@@ -36,6 +38,13 @@ export const resendInvoiceEmailRequest = (invoiceId: string) =>
     `/api/invoices/${encodeURIComponent(invoiceId)}/send-email`,
     "POST",
     {}
+  );
+
+export const markInvoicePaidRequest = (invoiceId: string, input: SuperAdminMarkPaidInput) =>
+  request<SuperAdminMarkPaidResult>(
+    `/api/invoices/${encodeURIComponent(invoiceId)}/mark-paid`,
+    "POST",
+    input
   );
 
 export const invoicePdfUrl = (invoiceId: string, inline = false) =>

@@ -2,6 +2,7 @@ import Link from 'next/link';
 
 import { EmailStatusBadge, PaymentStatusBadge } from '@/components/invoices/invoice-badges';
 import { InvoiceBreakdown, planRuleText } from '@/components/invoices/invoice-breakdown';
+import { MarkPaidDialog } from '@/components/invoices/mark-paid-dialog';
 import { ResendEmailButton } from '@/components/invoices/resend-email-button';
 import { Heading } from '@/components/ui/heading';
 import { Separator } from '@/components/ui/separator';
@@ -11,7 +12,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { AdminApiError, getInvoice } from '@/lib/admin-api';
 import { invoicePdfUrl } from '@/lib/invoice-client';
-import { formatBillingPeriod, formatDate, formatDateTime } from '@/lib/utils';
+import { formatBillingPeriod, formatDate, formatDateTime, formatMoney2 } from '@/lib/utils';
 import type { SuperAdminInvoiceDetail } from '@/types/super-admin-api';
 
 // Per-request platform data behind auth; never statically rendered.
@@ -89,6 +90,19 @@ const InvoiceDetailPage = async ({ params }: { params: { invoiceId: string } }) 
               </a>
             </Button>
             <ResendEmailButton invoiceId={invoice.id} variant="default" size="default" />
+            {invoice.paymentStatus === 'PENDING' && (
+              <MarkPaidDialog
+                invoiceId={invoice.id}
+                invoiceNumber={invoice.invoiceNumber}
+                storeName={invoice.store.name}
+                total={invoice.total}
+                currency={invoice.currency}
+                billingMonthYear={invoice.billingMonthYear}
+                billingMonthMonth={invoice.billingMonthMonth}
+                variant="default"
+                size="default"
+              />
+            )}
           </div>
         </div>
         <Separator />
@@ -173,6 +187,26 @@ const InvoiceDetailPage = async ({ params }: { params: { invoiceId: string } }) 
             </CardContent>
           </Card>
         </div>
+
+        {invoice.payment && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">Payment</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <dl className="grid gap-3 text-sm sm:grid-cols-2">
+                {field('Amount', formatMoney2(invoice.payment.amount, invoice.currency))}
+                {field('Recorded on', formatDateTime(invoice.payment.paymentDate))}
+              </dl>
+              {invoice.payment.notes && (
+                <div className="mt-3 text-sm">
+                  <p className="text-muted-foreground">Notes</p>
+                  <p className="whitespace-pre-wrap">{invoice.payment.notes}</p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        )}
 
         {invoice.notes && (
           <Card>

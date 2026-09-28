@@ -181,8 +181,33 @@ export interface SuperAdminInvoice {
   updatedAt: string;
 }
 
+/** The single recorded Payment for an Invoice (Release 1: full payment only). */
+export interface SuperAdminPayment {
+  id: string;
+  invoiceId: string;
+  /** Decimal string; always equals the Invoice total. */
+  amount: string;
+  /** ISO 8601 date string. */
+  paymentDate: string;
+  notes: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface SuperAdminInvoiceDetail extends SuperAdminInvoice {
   store: { id: string; name: string };
+  /** Null unless paymentStatus is PAID via a recorded Payment (never for zero-total auto-PAID invoices). */
+  payment: SuperAdminPayment | null;
+}
+
+/** The only value a client may submit when marking an invoice paid. */
+export interface SuperAdminMarkPaidInput {
+  notes: string | null;
+}
+
+export interface SuperAdminMarkPaidResult {
+  invoice: SuperAdminInvoice;
+  payment: SuperAdminPayment;
 }
 
 export interface SuperAdminInvoiceDetailResponse {
