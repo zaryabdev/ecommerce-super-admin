@@ -1,6 +1,7 @@
 import Link from 'next/link';
 
 import { StoreBillingPlanCard } from '@/components/billing/store-billing-plan-card';
+import { StoreLedgerCard } from '@/components/financial-ledger/store-ledger-card';
 import { StoreInvoicesCard } from '@/components/invoices/store-invoices-card';
 import { Heading } from '@/components/ui/heading';
 import { Separator } from '@/components/ui/separator';
@@ -21,6 +22,7 @@ import {
   getBillingPlans,
   getInvoices,
   getStoreBillingPlan,
+  getStoreFinancialLedger,
   getSuperAdminStore,
   getSuperAdminStoreOrders,
 } from '@/lib/admin-api';
@@ -31,6 +33,7 @@ import type {
   SuperAdminOrderStatus,
   SuperAdminStoreBillingPlan,
   SuperAdminStoreDetail,
+  SuperAdminStoreFinancialLedgerResponse,
   SuperAdminStoreOrdersResponse,
 } from '@/types/super-admin-api';
 
@@ -129,6 +132,12 @@ const StoreDetailPage = async ({
     'Unexpected error while loading invoices.'
   );
 
+  const ledgerPromise = settle<SuperAdminStoreFinancialLedgerResponse>(
+    '[STORE_DETAIL_LEDGER]',
+    getStoreFinancialLedger(params.storeId, 1, 10),
+    'Unexpected error while loading the financial ledger.'
+  );
+
   try {
     store = await getSuperAdminStore(params.storeId);
   } catch (error) {
@@ -173,6 +182,7 @@ const StoreDetailPage = async ({
   const { data: assignment, error: assignmentError } = await assignmentPromise;
   const { data: activePlans, error: plansError } = await activePlansPromise;
   const { data: invoicesData, error: invoicesError } = await invoicesPromise;
+  const { data: ledgerData, error: ledgerError } = await ledgerPromise;
   const { owner } = store;
   const ownerName =
     [owner.firstName, owner.lastName].filter(Boolean).join(' ') || '—';
@@ -266,6 +276,7 @@ const StoreDetailPage = async ({
           invoices={invoicesData}
           error={invoicesError}
         />
+        <StoreLedgerCard storeId={store.id} ledger={ledgerData} error={ledgerError} />
         <div className="space-y-4 pt-4">
           <h3 className="text-xl font-semibold tracking-tight">Orders</h3>
           {!ordersData ? (

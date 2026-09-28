@@ -210,6 +210,46 @@ export interface SuperAdminMarkPaidResult {
   payment: SuperAdminPayment;
 }
 
+// ---------- Financial Ledger (derived; no persisted ledger table) ----------
+
+export type SuperAdminFinancialLedgerEntryType = "INVOICE" | "PAYMENT";
+
+/**
+ * One flattened Invoice (debit) or Payment (credit) row. `balance` is the
+ * true chronological running balance after this transaction — computed
+ * server-side over the Store's full history, not just the current page.
+ */
+export interface SuperAdminFinancialLedgerEntry {
+  type: SuperAdminFinancialLedgerEntryType;
+  sourceId: string;
+  invoiceId: string;
+  invoiceNumber: string;
+  /** ISO 8601 date string: the Invoice's invoiceDate, or the Payment's paymentDate. */
+  date: string;
+  /** Decimal string, or null when this row is a credit. */
+  debit: string | null;
+  /** Decimal string, or null when this row is a debit. */
+  credit: string | null;
+  balance: string;
+  /** Payment notes only; INVOICE rows never carry notes here. */
+  notes: string | null;
+}
+
+export interface SuperAdminStoreFinancialLedgerSummary {
+  totalDebit: string;
+  totalCredit: string;
+  outstandingBalance: string;
+  currency: string;
+}
+
+export interface SuperAdminStoreFinancialLedgerResponse {
+  store: { id: string; name: string };
+  summary: SuperAdminStoreFinancialLedgerSummary;
+  /** Presented newest -> oldest; paginated. */
+  entries: SuperAdminFinancialLedgerEntry[];
+  pagination: SuperAdminPagination;
+}
+
 export interface SuperAdminInvoiceDetailResponse {
   invoice: SuperAdminInvoiceDetail;
 }

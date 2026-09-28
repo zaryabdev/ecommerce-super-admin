@@ -13,6 +13,7 @@ import type {
   SuperAdminInvoicePreviewResponse,
   SuperAdminMarkPaidInput,
   SuperAdminMarkPaidResult,
+  SuperAdminStoreFinancialLedgerResponse,
   SuperAdminBillingPlanResponse,
   SuperAdminBillingPlansResponse,
   SuperAdminBillingPlanStatus,
@@ -379,6 +380,23 @@ export async function markInvoicePaid(
     { method: "POST", body: input }
   );
   if (!body || !body.invoice || !body.payment) throw invalidResponse("mark invoice paid");
+  return body;
+}
+
+// Read-only: Admin derives every value from stored Invoice + Payment rows.
+// No Prisma, no accounting math here — Super Admin only relays the response.
+export async function getStoreFinancialLedger(
+  storeId: string,
+  page: number,
+  pageSize: number
+): Promise<SuperAdminStoreFinancialLedgerResponse> {
+  const query = new URLSearchParams({ page: String(page), pageSize: String(pageSize) });
+  const body = await adminApiFetch<SuperAdminStoreFinancialLedgerResponse>(
+    `${PRIVILEGED_PREFIX}stores/${encodeURIComponent(storeId)}/financial-ledger?${query}`
+  );
+  if (!body || !body.store || !body.summary || !Array.isArray(body.entries) || !body.pagination) {
+    throw invalidResponse("store financial ledger");
+  }
   return body;
 }
 
