@@ -9,8 +9,8 @@ import './globals.css'
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata = {
-  title: 'Super Admin',
-  description: 'E-Commerce platform administration',
+  title: 'Storvia Super Admin',
+  description: 'Storvia platform administration',
 }
 
 export default function RootLayout({
