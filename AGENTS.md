@@ -6,7 +6,7 @@ Third frontend of the e-commerce platform, for the platform owner (one designate
 
 ## Stack
 
-Next.js 13.4.5 App Router, React 18.2, TypeScript 5.1.3, Tailwind 3.3.2, shadcn/Radix, Clerk (`@clerk/nextjs` 4.x). Versions intentionally match `ecommerce-admin-cwa`.
+Next.js 13.4.5 App Router, React 18.2, TypeScript 5.1.3, Tailwind 3.3.2, shadcn/Radix, Clerk (`@clerk/nextjs` 4.x). Versions intentionally match `storvia-admin`.
 
 ## Hard Boundaries
 
@@ -33,4 +33,4 @@ All platform data comes from Admin's privileged API namespace (`/api/super-admin
 
 `npm run dev` (port 4002), `npm run build`, `npm run lint`, `npx tsc --noEmit`. Build needs Clerk keys in `.env.local` (see `.env.example`).
 
-Cross-repo canonical context lives in `ecommerce_ai_context` (`PROJECT_BRIEF.md`, `projects/super-admin/CONTEXT.md`, `decisions/DECISIONS.md`).
+Cross-repo canonical context lives in `storvia-ai-context` (`PROJECT_BRIEF.md`, `projects/super-admin/CONTEXT.md`, `decisions/DECISIONS.md`).

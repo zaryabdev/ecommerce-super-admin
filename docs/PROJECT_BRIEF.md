@@ -12,7 +12,7 @@ Super Admin (this repo, frontend, port 4002)
     -> Prisma -> PostgreSQL
 ```
 
-- `ecommerce-admin-cwa` is the only backend, Prisma owner and system of record. Merchant Admin UI and StoreFront are separate.
+- `storvia-admin` is the only backend, Prisma owner and system of record. Merchant Admin UI and StoreFront are separate.
 - Super Admin has no database, Prisma, or `DATABASE_URL`, and does not duplicate Admin routes.
 - Billing belongs to the Store (not the Clerk user). `StoreBillingProfile` exists in Admin; the billing-plan model is undecided. Invoices are manual in Release 1 — no Stripe subscriptions, cron or metering.
 
