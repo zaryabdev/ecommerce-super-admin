@@ -27,6 +27,17 @@ export interface SuperAdminStoreOwner {
 
 export interface SuperAdminStoreDetail extends SuperAdminStore {
   owner: SuperAdminStoreOwner;
+  /** Per-Store email kill switch (same field the merchant controls in Admin). */
+  emailDeliveryBlocked: boolean;
+}
+
+export interface SuperAdminStoreEmailSettings {
+  id: string;
+  emailDeliveryBlocked: boolean;
+}
+
+export interface SuperAdminStoreEmailSettingsResponse {
+  store: SuperAdminStoreEmailSettings;
 }
 
 export interface SuperAdminStoreDetailResponse {
@@ -295,5 +306,7 @@ export interface SuperAdminInvoicePreviewResponse {
 /** Result of Generate & Send, and of Resend Email. The Invoice exists either way. */
 export interface SuperAdminInvoiceGenerationResult {
   invoice: SuperAdminInvoice;
-  delivery: { status: "SENT" | "FAILED"; error: string | null };
+  // BLOCKED: the Store has email delivery blocked. The invoice was created and
+  // stays NOT_SENT; this is intentional suppression, not a failure.
+  delivery: { status: "SENT" | "FAILED" | "BLOCKED"; error: string | null };
 }

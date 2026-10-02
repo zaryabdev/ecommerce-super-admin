@@ -35,6 +35,8 @@ export const ResendEmailButton = ({
       const result = await resendInvoiceEmailRequest(invoiceId);
       if (result.delivery.status === "SENT") {
         toast.success("Invoice email sent.");
+      } else if (result.delivery.status === "BLOCKED") {
+        toast("Email delivery is blocked for this Store.", { icon: "⚠️" });
       } else {
         toast.error(
           `Email delivery failed${result.delivery.error ? `: ${result.delivery.error}` : "."}`
@@ -45,7 +47,9 @@ export const ResendEmailButton = ({
     } catch (error) {
       toast.error(
         error instanceof BillingRequestError
-          ? error.message
+          ? error.code === "EMAIL_DELIVERY_BLOCKED"
+            ? "Email delivery is blocked for this Store. Allow email on the Store page, then try again."
+            : error.message
           : "Something went wrong. Please try again."
       );
     } finally {

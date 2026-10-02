@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { StoreBillingPlanCard } from '@/components/billing/store-billing-plan-card';
 import { StoreLedgerCard } from '@/components/financial-ledger/store-ledger-card';
 import { StoreInvoicesCard } from '@/components/invoices/store-invoices-card';
+import { StoreEmailDeliveryCard } from '@/components/stores/store-email-delivery-card';
 import { Heading } from '@/components/ui/heading';
 import { Separator } from '@/components/ui/separator';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -264,6 +265,10 @@ const StoreDetailPage = async ({
             </CardContent>
           </Card>
         </div>
+        <StoreEmailDeliveryCard
+          storeId={store.id}
+          blocked={store.emailDeliveryBlocked}
+        />
         <StoreBillingPlanCard
           storeId={store.id}
           assignment={assignment}

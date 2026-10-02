@@ -175,6 +175,8 @@ export const GenerateInvoiceDialog: React.FC<GenerateInvoiceDialogProps> = ({
       setStage("result");
       if (generated.delivery.status === "SENT") {
         toast.success("Invoice generated and emailed.");
+      } else if (generated.delivery.status === "BLOCKED") {
+        toast("Invoice created. Email delivery is blocked for this Store.", { icon: "⚠️" });
       } else {
         toast("Invoice generated. Email delivery failed.", { icon: "⚠️" });
       }
@@ -421,12 +423,16 @@ export const GenerateInvoiceDialog: React.FC<GenerateInvoiceDialogProps> = ({
               <DialogTitle>
                 {result.delivery.status === "SENT"
                   ? "Invoice generated and emailed successfully."
-                  : "Invoice generated successfully, but email delivery failed."}
+                  : result.delivery.status === "BLOCKED"
+                    ? "Invoice created. Email delivery is blocked for this Store."
+                    : "Invoice generated successfully, but email delivery failed."}
               </DialogTitle>
               <DialogDescription>
                 {result.delivery.status === "SENT"
                   ? "The invoice PDF was sent to the store owner."
-                  : "The invoice exists and is valid. Only the email did not go out — use Resend Email; do not generate it again."}
+                  : result.delivery.status === "BLOCKED"
+                    ? "The invoice is valid and no email was sent. Allow email for this Store on its detail page, then use Resend Email on the invoice."
+                    : "The invoice exists and is valid. Only the email did not go out — use Resend Email; do not generate it again."}
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-3 text-sm">

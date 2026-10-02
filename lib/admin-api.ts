@@ -22,6 +22,8 @@ import type {
   SuperAdminStoreBillingPlanResponse,
   SuperAdminStoreDetail,
   SuperAdminStoreDetailResponse,
+  SuperAdminStoreEmailSettings,
+  SuperAdminStoreEmailSettingsResponse,
   SuperAdminStoreOrdersResponse,
   SuperAdminStoresResponse,
   SuperAdminStore,
@@ -194,6 +196,27 @@ export async function getSuperAdminStore(
   );
   if (!body || !body.store || typeof body.store.id !== "string") {
     console.error("[ADMIN_API] store detail response had an unexpected shape");
+    throw new AdminApiError("upstream", "The Admin API returned an invalid response.");
+  }
+  return body.store;
+}
+
+/** Admin owns the Store field; this only relays the block/allow request. */
+export async function updateStoreEmailSettings(
+  storeId: string,
+  emailDeliveryBlocked: boolean
+): Promise<SuperAdminStoreEmailSettings> {
+  const body = await adminApiFetch<SuperAdminStoreEmailSettingsResponse>(
+    `${PRIVILEGED_PREFIX}stores/${encodeURIComponent(storeId)}/email-settings`,
+    { method: "PATCH", body: { emailDeliveryBlocked } }
+  );
+  if (
+    !body ||
+    !body.store ||
+    typeof body.store.id !== "string" ||
+    typeof body.store.emailDeliveryBlocked !== "boolean"
+  ) {
+    console.error("[ADMIN_API] store email settings response had an unexpected shape");
     throw new AdminApiError("upstream", "The Admin API returned an invalid response.");
   }
   return body.store;

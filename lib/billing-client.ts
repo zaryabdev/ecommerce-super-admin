@@ -2,6 +2,7 @@ import type {
   SuperAdminBillingPlan,
   SuperAdminCreateBillingPlanInput,
   SuperAdminStoreBillingPlan,
+  SuperAdminStoreEmailSettings,
   SuperAdminUpdateBillingPlanInput,
 } from "@/types/super-admin-api";
 
@@ -79,5 +80,17 @@ export const updateStoreBillingPlanRequest = async (
       `/api/stores/${encodeURIComponent(storeId)}/billing-plan`,
       "PUT",
       { billingPlanId }
+    )
+  ).store;
+
+export const updateStoreEmailSettingsRequest = async (
+  storeId: string,
+  emailDeliveryBlocked: boolean
+) =>
+  (
+    await request<{ store: SuperAdminStoreEmailSettings }>(
+      `/api/stores/${encodeURIComponent(storeId)}/email-settings`,
+      "PATCH",
+      { emailDeliveryBlocked }
     )
   ).store;
