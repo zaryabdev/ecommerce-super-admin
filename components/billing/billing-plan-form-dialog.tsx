@@ -29,11 +29,26 @@ import type {
 
 // UX-only checks; Admin remains the authority (precision, ranges, exclusivity).
 // Values stay strings so no float ever touches a financial figure.
-const validateValue = (raw: string): string | null => {
+// True when a plain non-negative decimal string is greater than 100.
+const exceedsOneHundred = (value: string): boolean => {
+  const [integer, fraction = ""] = value.split(".");
+  const whole = integer.replace(/^0+(?=\d)/, "");
+  if (whole.length > 3) return true;
+  const n = Number(whole); // integer part only, at most 3 digits
+  return n > 100 || (n === 100 && /[1-9]/.test(fraction));
+};
+
+const validateValue = (
+  raw: string,
+  type: SuperAdminBillingPlanType
+): string | null => {
   const value = raw.trim();
   if (!value) return "A value is required.";
   if (value.startsWith("-")) return "Value must not be negative.";
   if (!/^\d+(\.\d+)?$/.test(value)) return "Enter a valid number, e.g. 1500 or 2.5.";
+  if (type === "PERCENTAGE" && exceedsOneHundred(value)) {
+    return "Percentage rate must be between 0 and 100.";
+  }
   return null;
 };
 
@@ -42,7 +57,7 @@ const VALUE_FIELD: Record<
   { label: string; placeholder: string }
 > = {
   FIXED: { label: "Fixed Amount (PKR)", placeholder: "e.g. 5000" },
-  PERCENTAGE: { label: "Percentage Rate", placeholder: "e.g. 2.5" },
+  PERCENTAGE: { label: "Percentage Rate (0–100)", placeholder: "e.g. 2.5" },
 };
 
 interface BillingPlanFormDialogProps {
@@ -67,7 +82,7 @@ export const BillingPlanFormDialog: React.FC<BillingPlanFormDialogProps> = ({
   const value = type === "FIXED" ? fixedAmount : percentageRate;
   const setValue = type === "FIXED" ? setFixedAmount : setPercentageRate;
   const nameError = name.trim() ? null : "Name is required.";
-  const valueError = validateValue(value);
+  const valueError = validateValue(value, type);
 
   const hydrate = () => {
     setName(plan?.name ?? "");
@@ -197,7 +212,13 @@ export const BillingPlanFormDialog: React.FC<BillingPlanFormDialogProps> = ({
               placeholder={field.placeholder}
               inputMode="decimal"
               autoComplete="off"
+              aria-describedby={type === "PERCENTAGE" ? "billing-plan-value-hint" : undefined}
             />
+            {type === "PERCENTAGE" && (
+              <p id="billing-plan-value-hint" className="text-sm text-muted-foreground">
+                Between 0 and 100 (e.g. 2.5 means 2.5%).
+              </p>
+            )}
             {showFieldErrors && valueError && (
               <p className="text-sm text-destructive">{valueError}</p>
             )}
